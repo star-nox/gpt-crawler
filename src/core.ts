@@ -31,9 +31,15 @@ function downloadPdf(url: string) {
 }
 
 export function getPageHtml(page: Page, selector = "body") {
+  
   return page.evaluate((selector) => {
+    console.log(`Getting page HTML...`);
+    // Exclude header, footer, nav from scraping
+    const elementsToExclude = document.querySelectorAll('header, footer, nav');
+    elementsToExclude.forEach(element => element.remove());
     // Check if the selector is an XPath
     if (selector.startsWith("/")) {
+      console.log(`XPath: ${selector}`);
       const elements = document.evaluate(
         selector,
         document,
@@ -45,6 +51,7 @@ export function getPageHtml(page: Page, selector = "body") {
       return result ? result.textContent || "" : "";
     } else {
       // Handle as a CSS selector
+      console.log(`Selector: ${selector}`);
       const el = document.querySelector(selector) as HTMLElement | null;
       return el?.innerText || "";
     }
@@ -70,8 +77,7 @@ export async function waitForXPath(page: Page, xpath: string, timeout: number) {
 
 export async function crawl(config: Config) {
   configSchema.parse(config);
-  console.log(config)
-
+  
   if (config.url){
     if (config.url.endsWith('.pdf')) {
       console.log(`Downloading PDF: ${config.url}`);
@@ -105,8 +111,9 @@ export async function crawl(config: Config) {
                 });
               }
             }
-        
+            page.on('console', message => console.log(`Page log: ${message.text()}`));
             const html = await getPageHtml(page, config.selector);
+            //console.log(html);
     
             // Save results as JSON to ./storage/datasets/default
             await pushData({ title, url: request.loadedUrl, html });
@@ -120,6 +127,15 @@ export async function crawl(config: Config) {
             await enqueueLinks({
               globs:
                 typeof config.match === "string" ? [config.match] : config.match,
+              transformRequestFunction(req) {
+                // ignore all links ending with `.pdf`
+                if (req.url.endsWith('.pdf')) {
+                  console.log(`Downloading PDF: ${req.url}`);
+                  downloadPdf(req.url);
+                  return false;
+                }
+                return req;
+              },
             });
           },
           // Comment this option to scrape the full website.
