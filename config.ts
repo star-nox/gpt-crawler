@@ -5,4 +5,5 @@ export const defaultConfig: Config = {
   match: "",
   maxPagesToCrawl: 50,
   outputFileName: "output.json",
+  maxTokens: 2000000,
 };
