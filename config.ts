@@ -1,7 +1,7 @@
 import { Config } from "./src/config";
 
 export const defaultConfig: Config = {
-  url: "https://www.builder.io/c/docs/developers",
+  url: "https://extensionpublications.unl.edu/assets/pdf/ec711.pdf",
   match: "",
   maxPagesToCrawl: 50,
   outputFileName: "output.json",
